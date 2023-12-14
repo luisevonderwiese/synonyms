@@ -1,0 +1,9 @@
+{"size_limit": 27400,
+"family_split_threshold": 10000000000,
+"data_dir" : "data/lingdata",
+"native_dir" : "data/lingdata",
+"sources" : ["lexibank", "SequenceComparison"],
+"ling_types" : ["cognate"],
+"msa_types" : ["bin", "catg_bin", "catg_multi"],
+"glottolog_tree_required" : 1,
+"flat_paths" : 1}
