@@ -6,4 +6,5 @@
 "ling_types" : ["cognate"],
 "msa_types" : ["bin", "catg_bin", "catg_multi"],
 "glottolog_tree_required" : 1,
-"flat_paths" : 1}
+"flat_paths" : 1,
+"github_token" :  "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"}
