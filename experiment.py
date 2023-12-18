@@ -2,8 +2,7 @@ import os
 import pandas as pd
 import numpy as np
 
-import lingdata.lingdata as lingdata
-import lingdata.sampling as sampling
+import lingdata.database as database
 
 import code.raxmlng as raxmlng
 import code.pythia as pythia
@@ -12,15 +11,6 @@ import code.util as util
 
 
 
-
-
-def generate_data():
-    lingdata.update_native()
-    lingdata.generate_data()
-    df = lingdata.data()
-    with open(config_path, 'r') as openfile:
-        json_object = json.load(openfile)
-    sampling.generate_samples(df, 100, params.data_dir, params.flat_paths)
 
 
 def run_raxml_ng(df):
@@ -104,15 +94,16 @@ results_dir = "data/results"
 
 
 
-lingdata.read_params(config_path)
-#generate_data()
-df = lingdata.data()
-df = sampling.add_sampled_msa_paths(df, 100, params.data_dir, params.flat_paths])
+database.read_config(config_path)
+database.update_native()
+database.generate_data()
+df = database.data()
+print(df)
 
 
 pd.set_option('display.max_rows', None)
-#run_raxml_ng(df)
-#consense_trees(df)
-#calculate_distances(df)
-#run_pythia(df)
+run_raxml_ng(df)
+consense_trees(df)
+calculate_distances(df)
+run_pythia(df)
 write_results_df(df)
