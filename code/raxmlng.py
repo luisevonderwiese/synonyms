@@ -1,6 +1,6 @@
 import os
 from ete3 import Tree
-import distances.distances as distances
+import code.distances as distances
 
 exe_path = ""
 

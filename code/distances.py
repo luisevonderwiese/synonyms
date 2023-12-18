@@ -6,7 +6,7 @@ import shutil
 import copy
 
 metrics = ["rf", "gq"]
-ref_tree_names = ["glottolog", "bin", "catg", "catg_multi_mk", "consensus"]
+ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi_mk", "consensus"]
 num_ref_trees = len(ref_tree_names)
 ref_trees = {}
 for i, ref_tree_name in enumerate(ref_tree_names):

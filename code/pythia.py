@@ -1,7 +1,7 @@
 import os
 
 raxmlng_path = ""
-predictor_path = "../pythia/predictors/latest.pckl"
+predictor_path = ""
 
 
 def get_difficulty(prefix):

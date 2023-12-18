@@ -5,46 +5,46 @@ from tabulate import tabulate
 import math
 from scipy import stats
 
-from lingdata.lingdata import lingdata
+from lingdata import database 
 from lingdata.categorical import CategoricalData
 
 import code.distances as distances
 import code.util as util
 
 
-setups = ["bin", "catg", "catg_multi_mk", "bin&catg", "bin&catg_multi_mk", "catg&catg_multi_mk", "all"]
-relevant_setups = ["bin", "catg", "catg_multi_mk", "all"]
+setups = ["bin", "catg_bin", "catg_multi_mk", "bin&catg_bin", "bin&catg_multi_mk", "catg_bin&catg_multi_mk", "all"]
+relevant_setups = ["bin", "catg_bin", "catg_multi_mk", "all"]
 
 def add_distance_matrices(df):
     distance_matrices = []
     for (i, row) in df.iterrows():
-        dm = distances.DistanceMatrix(util.dist_dir(row))
+        dm = distances.DistanceMatrix(util.dist_dir(results_dir, row))
         distance_matrices.append(dm)
     df["distance_matrix"] = distance_matrices
 
 def add_distances(df):
-    winner_dict = {"bin" : [], "catg" : [], "catg_multi_mk" : []}
+    winner_dict = {"bin" : [], "catg_bin" : [], "catg_multi_mk" : []}
     for (i, row) in df.iterrows():
         df.at[i, "rf_bin_avg"] = row["distance_matrix"].avg_ref_tree_dist("bin", "rf")
         df.at[i, "rf_bin_max"] = row["distance_matrix"].max_ref_tree_dist("bin", "rf")
         df.at[i, "rf_sampled_avg"] = row["distance_matrix"].sampled_avg_avg_dist("rf")
         df.at[i, "rf_sampled_max"] = row["distance_matrix"].sampled_max_avg_dist("rf")
-        df.at[i, "rf_bin_catg"] = row["distance_matrix"].ref_tree_dist("bin", "catg", "rf")
-        df.at[i, "rf_catg_catg_multi_mk"] = row["distance_matrix"].ref_tree_dist("catg_multi_mk", "catg", "rf")
+        df.at[i, "rf_bin_catg_bin"] = row["distance_matrix"].ref_tree_dist("bin", "catg_bin", "rf")
+        df.at[i, "rf_catg_bin_catg_multi_mk"] = row["distance_matrix"].ref_tree_dist("catg_multi_mk", "catg_bin", "rf")
         df.at[i, "rf_bin_catg_multi_mk"] = row["distance_matrix"].ref_tree_dist("bin", "catg_multi_mk", "rf")
         gqd_bin = row["distance_matrix"].ref_tree_dist("glottolog", "bin", "gq")
         df.at[i, "gqd_bin"] = gqd_bin
-        gqd_catg = row["distance_matrix"].ref_tree_dist("glottolog", "catg", "gq")
-        df.at[i, "gqd_catg"] = gqd_catg
+        gqd_catg = row["distance_matrix"].ref_tree_dist("glottolog", "catg_bin", "gq")
+        df.at[i, "gqd_catg_bin"] = gqd_catg
         gqd_catg_multi_mk = row["distance_matrix"].ref_tree_dist("glottolog", "catg_multi_mk", "gq")
         df.at[i, "gqd_catg_multi_mk"] = gqd_catg_multi_mk
 
         df.at[i, "gqd_sampled_avg"] = row["distance_matrix"].avg_ref_tree_dist("glottolog", "gq")
         winner = ["bin"]
         if gqd_catg < gqd_bin:
-            winner = ["catg"]
+            winner = ["catg_bin"]
         if gqd_catg == gqd_bin:
-            winner.append("catg")
+            winner.append("catg_bin")
         if gqd_catg_multi_mk == gqd_bin:
             if gqd_catg_multi_mk <= gqd_catg:
                 winner.append("catg_multi_mk")
@@ -60,11 +60,11 @@ def add_distances(df):
                 winner_dict[setup].append(False)
 
     df["gqd_sampled_diff"] = df["gqd_sampled_avg"] - df["gqd_bin"]
-    df["gqd_diff_bin_catg"] = df["gqd_bin"] - df["gqd_catg"]
-    df["gqd_diff_catg_catg_multi_mk"] = df["gqd_catg"] - df["gqd_catg_multi_mk"]
+    df["gqd_diff_bin_catg_bin"] = df["gqd_bin"] - df["gqd_catg_bin"]
+    df["gqd_diff_catg_bin_catg_multi_mk"] = df["gqd_catg_bin"] - df["gqd_catg_multi_mk"]
     df["gqd_diff_bin_catg_multi_mk"] = df["gqd_bin"] - df["gqd_catg_multi_mk"]
     df["bin_best"] = winner_dict["bin"]
-    df["catg_best"] = winner_dict["catg"]
+    df["catg_bin_best"] = winner_dict["catg_bin"]
     df["catg_multi_mk_best"] = winner_dict["catg_multi_mk"]
 
 
@@ -88,13 +88,13 @@ def get_bins(a, nbins):
 
 def get_winner_dfs(df):
     winner_dfs = {}
-    winner_dfs["bin"] =  df[df["bin_best"] & (df["catg_best"] == False) & (df["catg_multi_mk_best"] == False)]
-    winner_dfs["catg"] =  df[(df["bin_best"] == False) & df["catg_best"] & (df["catg_multi_mk_best"] == False)]
-    winner_dfs["catg_multi_mk"] =  df[(df["bin_best"] == False) & (df["catg_best"] == False) & df["catg_multi_mk_best"]]
-    winner_dfs["bin&catg"] =  df[df["bin_best"] & df["catg_best"] & (df["catg_multi_mk_best"] == False)]
-    winner_dfs["bin&catg_multi_mk"] =  df[df["bin_best"] & (df["catg_best"] == False) & df["catg_multi_mk_best"]]
-    winner_dfs["catg&catg_multi_mk"] =  df[(df["bin_best"] == False) & df["catg_best"] & df["catg_multi_mk_best"]]
-    winner_dfs["all"] =  df[df["bin_best"] & df["catg_best"] & df["catg_multi_mk_best"]]
+    winner_dfs["bin"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & (df["catg_multi_mk_best"] == False)]
+    winner_dfs["catg_bin"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & (df["catg_multi_mk_best"] == False)]
+    winner_dfs["catg_multi_mk"] =  df[(df["bin_best"] == False) & (df["catg_bin_best"] == False) & df["catg_multi_mk_best"]]
+    winner_dfs["bin&catg_bin"] =  df[df["bin_best"] & df["catg_bin_best"] & (df["catg_multi_mk_best"] == False)]
+    winner_dfs["bin&catg_multi_mk"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & df["catg_multi_mk_best"]]
+    winner_dfs["catg_bin&catg_multi_mk"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & df["catg_multi_mk_best"]]
+    winner_dfs["all"] =  df[df["bin_best"] & df["catg_bin_best"] & df["catg_multi_mk_best"]]
     return winner_dfs
 
 
@@ -103,12 +103,12 @@ def get_winner_dfs(df):
 def setup_comparison(df, winner_dfs):
     print("MSA\t\tgqd(median)")
     print("bin\t\t" + str(df['gqd_bin'].median()))
-    print("catg\t\t" + str(df['gqd_catg'].median()))
+    print("catg_bin\t\t" + str(df['gqd_catg_bin'].median()))
     print("catg_multi_mk\t" + str(df['gqd_catg_multi_mk'].median()))
     print("")
     print("MSA\t\tgqd(mean)")
     print("bin\t\t" + str(df['gqd_bin'].mean()))
-    print("catg\t\t" + str(df['gqd_catg'].mean()))
+    print("catg_bin\t\t" + str(df['gqd_catg_bin'].mean()))
     print("catg_multi_mk\t" + str(df['gqd_catg_multi_mk'].mean()))
     print("")
     r = [[setup, len(winner_dfs[setup])] for setup in setups]
@@ -205,16 +205,18 @@ def sources_analysis(df):
 
 
 
-data_dir = "../../data"
-results_dir = os.path.join(data_dir, "subjectivity")
+results_dir = "data/results"
 plots_dir = os.path.join(results_dir, "plots")
+if not os.path.isdir(plots_dir):
+    os.makedirs(plots_dir)
 
 pd.set_option('display.max_rows', None)
 
-di = DataInterface("lingdata_subjectivity_config.json")
-#di.update_native()
-#di.generate_data()
-df = di.data()
+config_path = "synonyms_lingdata_config.json"
+
+database.read_config(config_path)
+df = database.data()
+
 df = df[df["glottolog_tree_path"] == df["glottolog_tree_path"] ]
 df = df[df["ling_type"] == "cognate"]
 df = df[df["source"] != "correspondence-pattern-data"] #datasets are double in different versions
@@ -223,8 +225,7 @@ add_distance_matrices(df)
 add_distances(df)
 df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottolog tree is small and so multifurcating, that it does not contain butterflies
 df = add_result_data(df)
-add_cd_data(df)
-
+print(df)
 
 iecor = df[df["ds_id"] == "iecor"]
 df = df[df["max_values"] <= 64]
