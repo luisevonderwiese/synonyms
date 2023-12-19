@@ -17,7 +17,7 @@ def run_raxml_ng(df):
     for (i, row) in df.iterrows():
         raxmlng.run_inference(row["msa_paths"]["bin"], "BIN+G", util.prefix(results_dir, row, "raxmlng", "bin"))
         raxmlng.run_inference(row["msa_paths"]["catg_bin"], "BIN+G", util.prefix(results_dir, row, "raxmlng" , "catg_bin"), "--prob-msa on")
-        raxmlng.run_inference(row["msa_paths"]["catg_multi"], row["MULTIx_MK"] + "+G", util.prefix(results_dir, row, "raxmlng", "catg_multi_mk"), "--prob-msa on")
+        raxmlng.run_inference(row["msa_paths"]["catg_multi"], row["MULTIx_MK"] + "+G", util.prefix(results_dir, row, "raxmlng", "catg_multi"), "--prob-msa on")
         for (i, msa_path) in enumerate(row["sampled_msa_paths"]):
             print(i)
             raxmlng.run_inference(msa_path, "BIN+G", util.prefix(results_dir, row, "raxmlng", "sampled/sampled" + str(i)))
@@ -45,7 +45,7 @@ def calculate_distances(df):
         ref_tree_paths["glottolog"] = row["glottolog_tree_path"]
         ref_tree_paths["bin"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "bin"))
         ref_tree_paths["catg_bin"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "catg_bin"))
-        ref_tree_paths["catg_multi_mk"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "catg_multi_mk"))
+        ref_tree_paths["catg_multi"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "catg_multi"))
         ref_tree_paths["consensus"] = raxmlng.consensus_tree_path(util.prefix(results_dir, row, "raxmlng", "sampled_consensus"))
         sampled_tree_paths = []
         for (i, msa_path) in enumerate(row["sampled_msa_paths"]):
@@ -71,9 +71,9 @@ def write_results_df(df):
         df.at[i, "avg_ml_dist_bin"] =  raxmlng.avg_ml_tree_dist(util.prefix(results_dir, row, "raxmlng", "bin"))
         df.at[i, "aic_bin"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "bin"))[0]
         df.at[i, "aic_catg"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "catg_bin"))[0]
-        df.at[i, "aic_catg_multi_mk"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "catg_multi_mk"))[0]
-    print_df = df[["ds_id", "source", "ling_type", "family", "alpha", "heterogenity", "difficulty", "difficulty_mean", "difficulty_variance", "avg_ml_dist_bin", 
-        "aic_bin", "aic_catg", "aic_catg_multi_mk"]]
+        df.at[i, "aic_catg_multi"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "catg_multi"))[0]
+    print_df = df[["ds_id", "source", "ling_type", "family", "alpha", "heterogenity", "difficulty", "difficulty_mean", "difficulty_variance", "avg_ml_dist_bin",
+        "aic_bin", "aic_catg", "aic_catg_multi"]]
     print(print_df)
     print_df.to_csv(os.path.join(results_dir, "raxml_pythia_results.csv"), sep = ";")
 
@@ -92,15 +92,15 @@ results_dir = "data/results"
 
 
 database.read_config(config_path)
-#database.update_native()
-#database.generate_data()
+database.update_native()
+database.generate_data()
 df = database.data()
 print(df)
 
 
 pd.set_option('display.max_rows', None)
-#run_raxml_ng(df)
-#consense_trees(df)
-#calculate_distances(df)
-#run_pythia(df)
+run_raxml_ng(df)
+consense_trees(df)
+calculate_distances(df)
+run_pythia(df)
 write_results_df(df)
