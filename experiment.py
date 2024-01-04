@@ -72,8 +72,9 @@ def write_results_df(df):
         df.at[i, "aic_bin"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "bin"))[0]
         df.at[i, "aic_catg"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "catg_bin"))[0]
         df.at[i, "aic_catg_multi"] = raxmlng.aic(util.prefix(results_dir, row, "raxmlng", "catg_multi"))[0]
+        df.at[i, "zero_base_frequency_bin"] = raxmlng.base_frequencies(util.prefix(results_dir, row, "raxmlng", "bin"))[0]
     print_df = df[["ds_id", "source", "ling_type", "family", "alpha", "heterogenity", "difficulty", "difficulty_mean", "difficulty_variance", "avg_ml_dist_bin",
-        "aic_bin", "aic_catg", "aic_catg_multi"]]
+        "aic_bin", "aic_catg", "aic_catg_multi", "zero_base_frequency_bin"]]
     print(print_df)
     print_df.to_csv(os.path.join(results_dir, "raxml_pythia_results.csv"), sep = ";")
 
@@ -99,8 +100,8 @@ print(df)
 
 
 pd.set_option('display.max_rows', None)
-run_raxml_ng(df)
-consense_trees(df)
-calculate_distances(df)
-run_pythia(df)
+#run_raxml_ng(df)
+#consense_trees(df)
+#calculate_distances(df)
+#run_pythia(df)
 write_results_df(df)

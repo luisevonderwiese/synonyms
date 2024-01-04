@@ -45,6 +45,15 @@ def alpha(prefix):
             return float(line.split(",  ")[1].split(" ")[1])
     return float('nan')
 
+def base_frequencies(prefix):
+    with open(prefix + ".raxml.log", "r") as logfile:
+        lines = logfile.readlines()
+    for line in lines:
+        if line.startswith("   Base frequencies"):
+            parts = line.split(": ")[1].split(" ")[:-1]
+            return [float(part) for part in parts]
+    return []
+
 def aic(prefix):
     logpath = prefix + ".raxml.log"
     if not os.path.isfile(logpath):
