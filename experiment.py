@@ -93,8 +93,8 @@ results_dir = "data/results"
 
 
 database.read_config(config_path)
-database.update_native()
-database.generate_data()
+#database.update_native()
+#database.generate_data()
 df = database.data()
 print(df)
 

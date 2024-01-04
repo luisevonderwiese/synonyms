@@ -248,8 +248,9 @@ columns_interesting = [
 
 columns_uninteresting = [
     "rf_bin_avg",
-    "num_taxa"
-    "num_chars"
+    "num_taxa",
+    "num_chars",
+    "zero_base_frequency_bin"
 ]
 
 winner_comparison(winner_dfs, columns_interesting)
@@ -265,13 +266,14 @@ columns_uninteresting = [
 
 columns_interesting = [
         "multistate_ratio",
-        "difficulty",
+        "difficulty"
         ]
 columns_bootstrap = [
         "mean_norm_rf_distance",
         "mean_parsimony_support",
         "mean_parsimony_bootstrap_support",
         "mean_bootstrap_support",
+        "zero_base_frequency_bin"
         ]
 
 stability_correlation(df, columns_interesting)
@@ -288,3 +290,4 @@ sources_analysis(df)
 # print("iecor rf_sampled_avg: " + str(iecor["rf_sampled_avg"].mean()))
 # print("iecor difficulty: " + str(iecor["difficulty"].mean()))
 # print(" ")
+
