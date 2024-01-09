@@ -206,6 +206,27 @@ def sources_analysis(df):
     print(tabulate(r, tablefmt="pipe", headers = ["source", "number of datasets"]))
 
 
+def ambig_analysis(df):
+    types = ["ambig", "bin", "catg_bin", "catg_multi"]
+    r = []
+    for i, row in df.iterrows():
+        gqd_ambig = row["distance_matrix"].ref_tree_dist("glottolog", "ambig", "gqd")
+        if gqd_ambig != gqd_ambig:
+            continue
+        else:
+            for type in types:
+                r.append(row["distance_matrix"].ref_tree_dist("glottolog", type, "gqd"))
+            best = min(r)
+            winners = []
+            for i, type in enumerate(types):
+                if r[i] == best:
+                    winners.append(type)
+            r.append(winners)
+    print("GQD to Glottolog")
+    print(tabulate(r, tablefmt="pipe", headers = types + ["winners"]))
+
+
+
 
 
 
@@ -285,6 +306,8 @@ stability_correlation(df, columns_interesting)
 winner_comparison_plots(winner_dfs, "gqd_bin", "gqd_catg_multi")
 
 sources_analysis(df)
+
+ambig_analysis(df)
 
 # print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
 # print("Mean rf_sampled_avg: " + str(df["rf_sampled_avg"].mean()))
