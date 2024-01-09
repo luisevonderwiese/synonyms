@@ -9,6 +9,7 @@ from lingdata import database
 from lingdata.categorical import CategoricalData
 
 import code.distances as distances
+from code.distances import DistanceMatrixIO
 import code.util as util
 
 
@@ -17,8 +18,11 @@ relevant_setups = ["bin", "catg_bin", "catg_multi", "all"]
 
 def add_distance_matrices(df):
     distance_matrices = []
+    metrics = ["rf", "gq"]
+    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
+    d_io = DistanceMatrixIO(metrics, ref_tree_names)
     for (i, row) in df.iterrows():
-        dm = distances.DistanceMatrix(util.dist_dir(results_dir, row))
+        dm = d_io.read_matrix(util.dist_dir(results_dir, row))
         distance_matrices.append(dm)
     df["distance_matrix"] = distance_matrices
 
@@ -290,4 +294,3 @@ sources_analysis(df)
 # print("iecor rf_sampled_avg: " + str(iecor["rf_sampled_avg"].mean()))
 # print("iecor difficulty: " + str(iecor["difficulty"].mean()))
 # print(" ")
-

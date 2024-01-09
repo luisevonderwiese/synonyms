@@ -5,14 +5,8 @@ import traceback
 import shutil
 import copy
 
-metrics = ["rf", "gq"]
-ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
-num_ref_trees = len(ref_tree_names)
-ref_trees = {}
-for i, ref_tree_name in enumerate(ref_tree_names):
-    ref_trees[ref_tree_name] = i - num_ref_trees
-exe_path = ""
 
+exe_path = ""
 
 def rf_distance(t1, t2):
     if t1 is None or t2 is None:
@@ -38,64 +32,76 @@ def gq_distance(tree_name1, tree_name2):
     os.remove("out.txt")
     return qdist
 
-def write_matrix(matrix, path):
-    with open(path, "w+") as dm_file:
-        dm_file.write("\n".join([",".join([str(el) for el in row]) for row in matrix]))
 
+class DistanceMatrixIO:
 
-def matrix(tree_paths, metric):
-    distance_matrix = [[0.0 for _ in range(i + 1)] for i in range(len(tree_paths))]
-    if metric ==  "rf":
-        trees = []
-        for tree_path in tree_paths:
-            try:
-                trees.append(Tree(tree_path))
-            except Exception as e:
-                print(e)
-                trees.append(None)
-        for i in range(len(trees)):
-            for j in range(i, len(trees)):
-                assert(j >= i)
-                rfd = rf_distance(trees[i], trees[j])
-                distance_matrix[j][i] = rfd
-        return distance_matrix
-    if metric == "gq":
-        for i in range(len(tree_paths)):
-            for j in range(i, len(tree_paths)):
-                gqd = gq_distance(tree_paths[i], tree_paths[j])
-                distance_matrix[j][i] = gqd
-        return distance_matrix
-    else:
-        print("Metric " + metric + " not defined")
+    def __init__(self, metrics, ref_tree_names):
+        self.metrics = metrics
+        self.ref_tree_names = ref_tree_names
 
+    def matrix(self, tree_paths, metric):
+        distance_matrix = [[0.0 for _ in range(i + 1)] for i in range(len(tree_paths))]
+        if metric ==  "rf":
+            trees = []
+            for tree_path in tree_paths:
+                try:
+                    trees.append(Tree(tree_path))
+                except Exception as e:
+                    print(e)
+                    trees.append(None)
+            for i in range(len(trees)):
+                for j in range(i, len(trees)):
+                    assert(j >= i)
+                    rfd = rf_distance(trees[i], trees[j])
+                    distance_matrix[j][i] = rfd
+            return distance_matrix
+        if metric == "gq":
+            for i in range(len(tree_paths)):
+                for j in range(i, len(tree_paths)):
+                    gqd = gq_distance(tree_paths[i], tree_paths[j])
+                    distance_matrix[j][i] = gqd
+            return distance_matrix
+        else:
+            print("Metric " + metric + " not defined")
 
+    def write_matrix(self, dist_dir, sampled_tree_paths, ref_tree_paths):
+        if not os.path.isdir(dist_dir):
+            os.makedirs(dist_dir)
+        sampled_tree_paths = copy.deepcopy(sampled_tree_paths)
+        for ref_tree_name in self.ref_tree_names:
+            if not ref_tree_name in ref_tree_paths:
+                print("Path for " + ref_tree_name + " missing!")
+                shutil.rmtree(dist_dir)
+                return
+            sampled_tree_paths.append(ref_tree_paths[ref_tree_name])
+        try:
+            for metric in self.metrics:
+                matrix_path = os.path.join(dist_dir, "matrix_" + metric + ".csv")
+                m = self.matrix(sampled_tree_paths, metric)
+                with open(matrix_path, "w+") as dm_file:
+                    dm_file.write("\n".join([",".join([str(el) for el in row]) for row in m]))
+        except Exception as e:
+            traceback.print_exc()
+            shutil.rmtree(dist_dir)
+        return
 
-def generate_distances(dist_dir, sampled_tree_paths, ref_tree_paths):
-    if not os.path.isdir(dist_dir):
-        os.makedirs(dist_dir)
-    sampled_tree_paths = copy.deepcopy(sampled_tree_paths)
-    for ref_tree_name in ref_tree_names:
-        sampled_tree_paths.append(ref_tree_paths[ref_tree_name])
-    try:
-        for metric in metrics:
-            matrix_path = os.path.join(dist_dir, "matrix_" + metric + ".csv")
-            m = matrix(sampled_tree_paths, metric)
-            write_matrix(m, matrix_path)
-    except Exception as e:
-        traceback.print_exc()
-        shutil.rmtree(dist_dir)
-    return DistanceMatrix(dist_dir)
+    def read_matrix(self, dist_dir):
+        return DistanceMatrix(dist_dir, self.ref_tree_names, self.metrics)
 
 
 
 class DistanceMatrix:
 
-    def __init__(self, dist_dir):
+    def __init__(self, dist_dir, ref_tree_names, metrics):
+        self.num_ref_trees = len(ref_tree_names)
+        self.ref_tree_indices = {}
+        for i, ref_tree_name in enumerate(ref_tree_names):
+            self.ref_tree_indices[ref_tree_name] = i - self.num_ref_trees
         self. matrices = {}
         for metric in metrics:
             path = os.path.join(dist_dir, "matrix_" + metric + ".csv")
             self.matrices[metric] = self.read_matrix(path)
-        self.num_sampled = len(self.matrices[metrics[0]]) - num_ref_trees
+        self.num_sampled = len(self.matrices[metrics[0]]) - self.num_ref_trees
 
 
 
@@ -108,15 +114,15 @@ class DistanceMatrix:
 
 
     def ref_tree_dist(self, tree1, tree2, metric):
-        idx1 = ref_trees[tree1]
-        idx2 = ref_trees[tree2]
+        idx1 = self.ref_tree_indices[tree1]
+        idx2 = self.ref_tree_indices[tree2]
         max_idx = max(idx1, idx2)
         second_idx = min(idx1, idx2) - (max_idx + 1)
         return self.matrices[metric][max_idx][second_idx]
 
     def ref_tree_dist_vector(self, tree, metric):
-        idx = ref_trees[tree]
-        offset = - idx - (num_ref_trees + 1)
+        idx = self.ref_tree_indices[tree]
+        offset = - idx - (self.num_ref_trees + 1)
         res = self.matrices[metric][idx][:offset]
         assert(len(res) == self.num_sampled)
         return res

@@ -1,27 +1,33 @@
 import sys
-sys.path.append("..")
+sys.path.append("../code")
 
-import distances.distances as distances
+from distances import DistanceMatrixIO
+import distances as distances
+
 from ete3 import Tree
 import os
 
 def test_distances():
-    dist_dir = "../../test_data/distances"
-    sampled_tree_paths = [
-        "../../test_data/distances/trees/bodtkhobwa/sampled00_bin.raxml.bestTree",
-        "../../test_data/distances/trees/bodtkhobwa/sampled01_bin.raxml.bestTree",
-        "../../test_data/distances/trees/bodtkhobwa/sampled02_bin.raxml.bestTree",
-        "../../test_data/distances/trees/bodtkhobwa/sampled03_bin.raxml.bestTree",
-        "../../test_data/distances/trees/bodtkhobwa/sampled04_bin.raxml.bestTree"]
-    ref_tree_paths = {}
-    ref_tree_paths["glottolog"] = "../../test_data/distances/trees/bodtkhobwa/glottolog.tre"
-    ref_tree_paths["bin"] = "../../test_data/distances/trees/bodtkhobwa/full_bin.raxml.bestTree"
-    ref_tree_paths["catg"] = "../../test_data/distances/trees/bodtkhobwa/full_catg.raxml.bestTree"
-    ref_tree_paths["catg_multi_mk"] = "../../test_data/distances/trees/bodtkhobwa/full_catg_multi.raxml.bestTree"
-    ref_tree_paths["consensus"] = "../../test_data/distances/trees/bodtkhobwa/sampled_consensus.raxml.consensusTreeMR"
-    distances.generate_distances(dist_dir, sampled_tree_paths, ref_tree_paths)
-    dm = distances.DistanceMatrix(dist_dir)
     metrics = ["rf", "gq"]
+    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
+    d_io = DistanceMatrixIO(metrics, ref_tree_names)
+    dist_dir = "../test_data/distances"
+    if not os.path.isdir(dist_dir):
+        os.mkdir(dist_dir)
+    sampled_tree_paths = [
+        "../test_data/trees/bodtkhobwa/sampled00_bin.raxml.bestTree",
+        "../test_data/trees/bodtkhobwa/sampled01_bin.raxml.bestTree",
+        "../test_data/trees/bodtkhobwa/sampled02_bin.raxml.bestTree",
+        "../test_data/trees/bodtkhobwa/sampled03_bin.raxml.bestTree",
+        "../test_data/trees/bodtkhobwa/sampled04_bin.raxml.bestTree"]
+    ref_tree_paths = {}
+    ref_tree_paths["glottolog"] = "../test_data/trees/bodtkhobwa/glottolog.tre"
+    ref_tree_paths["bin"] = "../test_data/trees/bodtkhobwa/full_bin.raxml.bestTree"
+    ref_tree_paths["catg_bin"] = "../test_data/trees/bodtkhobwa/full_catg.raxml.bestTree"
+    ref_tree_paths["catg_multi"] = "../test_data/trees/bodtkhobwa/full_catg_multi.raxml.bestTree"
+    ref_tree_paths["consensus"] = "../test_data/trees/bodtkhobwa/sampled_consensus.raxml.consensusTreeMR"
+    d_io.write_matrix(dist_dir, sampled_tree_paths, ref_tree_paths)
+    dm = d_io.read_matrix(dist_dir)
     ref_trees = {}
     for name, path in ref_tree_paths.items():
         ref_trees[name] = Tree(path)
@@ -61,5 +67,5 @@ def test_distances():
 
 
 
-distances.exe_path = "./../../bin/qdist"
+distances.exe_path = "./../bin/qdist"
 test_distances()

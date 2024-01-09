@@ -7,6 +7,7 @@ import lingdata.database as database
 import code.raxmlng as raxmlng
 import code.pythia as pythia
 import code.distances as distances
+from code.distances import DistanceMatrixIO
 import code.util as util
 
 
@@ -37,10 +38,13 @@ def consense_trees(df):
         raxmlng.consense_tree(util.prefixes, util.prefix(results_dir, row, "raxmlng", "sampled_consensus"))
 
 def calculate_distances(df):
+    metrics = ["rf", "gq"]
+    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
+    d_io = DistanceMatrixIO(metrics, ref_tree_names)
     for (i, row) in df.iterrows():
         dist_dir = util.dist_dir(results_dir, row)
-        if os.path.isfile(os.path.join(dist_dir, "matrix_rf.csv")) and os.path.isfile(os.path.join(dist_dir, "matrix_gq.csv")):
-            continue
+        #if os.path.isfile(os.path.join(dist_dir, "matrix_rf.csv")) and os.path.isfile(os.path.join(dist_dir, "matrix_gq.csv")):
+        #    continue
         ref_tree_paths = {}
         ref_tree_paths["glottolog"] = row["glottolog_tree_path"]
         ref_tree_paths["bin"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "bin"))
@@ -50,7 +54,7 @@ def calculate_distances(df):
         sampled_tree_paths = []
         for (i, msa_path) in enumerate(row["sampled_msa_paths"]):
             sampled_tree_paths.append(raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "sampled/sampled" + str(i))))
-        distances.generate_distances(dist_dir, sampled_tree_paths, ref_tree_paths)
+        d_io.write_matrix(dist_dir, sampled_tree_paths, ref_tree_paths)
 
 
 def write_results_df(df):
@@ -102,6 +106,6 @@ print(df)
 pd.set_option('display.max_rows', None)
 #run_raxml_ng(df)
 #consense_trees(df)
-#calculate_distances(df)
+calculate_distances(df)
 #run_pythia(df)
 write_results_df(df)
