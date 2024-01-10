@@ -19,7 +19,7 @@ relevant_setups = ["bin", "catg_bin", "catg_multi", "all"]
 def add_distance_matrices(df):
     distance_matrices = []
     metrics = ["rf", "gq"]
-    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
+    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "ambig", "consensus"]
     d_io = DistanceMatrixIO(metrics, ref_tree_names)
     for (i, row) in df.iterrows():
         dm = d_io.read_matrix(util.dist_dir(results_dir, row))
@@ -210,18 +210,20 @@ def ambig_analysis(df):
     types = ["ambig", "bin", "catg_bin", "catg_multi"]
     r = []
     for i, row in df.iterrows():
-        gqd_ambig = row["distance_matrix"].ref_tree_dist("glottolog", "ambig", "gqd")
+        gqd_ambig = row["distance_matrix"].ref_tree_dist("glottolog", "ambig", "gq")
         if gqd_ambig != gqd_ambig:
             continue
         else:
+            part_r = []
             for type in types:
-                r.append(row["distance_matrix"].ref_tree_dist("glottolog", type, "gqd"))
-            best = min(r)
+                part_r.append(row["distance_matrix"].ref_tree_dist("glottolog", type, "gq"))
+            best = min(part_r)
             winners = []
             for i, type in enumerate(types):
-                if r[i] == best:
+                if part_r[i] == best:
                     winners.append(type)
-            r.append(winners)
+            part_r.append(winners)
+            r.append(part_r)
     print("GQD to Glottolog")
     print(tabulate(r, tablefmt="pipe", headers = types + ["winners"]))
 
@@ -242,19 +244,14 @@ config_path = "synonyms_lingdata_config.json"
 database.read_config(config_path)
 df = database.data()
 
-df = df[df["glottolog_tree_path"] == df["glottolog_tree_path"] ]
-df = df[df["ling_type"] == "cognate"]
-df = df[df["source"] != "correspondence-pattern-data"] #datasets are double in different versions
+df = df[df["max_values"] >= 2] #filters out datasets with only one value/missing data (last time I checked it affected only one dataset)
 
 add_distance_matrices(df)
 add_distances(df)
-df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottolog tree is small and so multifurcating, that it does not contain butterflies
+df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottolog tree is small and so multifurcating, that it does noti contain butterflies
 df = add_result_data(df)
 print(df)
 
-iecor = df[df["ds_id"] == "iecor"]
-df = df[df["max_values"] <= 64]
-df = df[df["max_values"] >= 2]
 
 winner_dfs = get_winner_dfs(df)
 setup_comparison(df, winner_dfs)
@@ -308,6 +305,8 @@ winner_comparison_plots(winner_dfs, "gqd_bin", "gqd_catg_multi")
 sources_analysis(df)
 
 ambig_analysis(df)
+
+iecor = df[df["ds_id"] == "iecor"]
 
 # print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
 # print("Mean rf_sampled_avg: " + str(df["rf_sampled_avg"].mean()))

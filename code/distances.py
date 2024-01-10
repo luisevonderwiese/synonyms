@@ -19,6 +19,9 @@ def rf_distance(t1, t2):
     return rf/max_rf
 
 def gq_distance(tree_name1, tree_name2):
+    if exe_path == "":
+        print("Specify exe path of qdist")
+        return float("nan")
     if tree_name1 is None or tree_name2 is None:
         return float('nan')
     if tree_name1 != tree_name1 or tree_name2 != tree_name2:

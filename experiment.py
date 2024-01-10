@@ -46,8 +46,8 @@ def calculate_distances(df):
     d_io = DistanceMatrixIO(metrics, ref_tree_names)
     for (i, row) in df.iterrows():
         dist_dir = util.dist_dir(results_dir, row)
-        #if os.path.isfile(os.path.join(dist_dir, "matrix_rf.csv")) and os.path.isfile(os.path.join(dist_dir, "matrix_gq.csv")):
-        #    continue
+        if os.path.isfile(os.path.join(dist_dir, "matrix_rf.csv")) and os.path.isfile(os.path.join(dist_dir, "matrix_gq.csv")):
+            continue
         ref_tree_paths = {}
         ref_tree_paths["glottolog"] = row["glottolog_tree_path"]
         ref_tree_paths["bin"] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", "bin"))
@@ -102,8 +102,8 @@ print(df)
 
 
 pd.set_option('display.max_rows', None)
-run_raxml_ng(df)
+#run_raxml_ng(df)
 #consense_trees(df)
-calculate_distances(df)
+#calculate_distances(df)
 #run_pythia(df)
-write_results_df(df)
+#write_results_df(df)
