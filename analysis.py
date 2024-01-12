@@ -19,7 +19,7 @@ relevant_setups = ["bin", "catg_bin", "catg_multi", "all"]
 def add_distance_matrices(df):
     distance_matrices = []
     metrics = ["rf", "gq"]
-    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "ambig", "consensus"]
+    ref_tree_names = ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"]
     d_io = DistanceMatrixIO(metrics, ref_tree_names)
     for (i, row) in df.iterrows():
         dm = d_io.read_matrix(util.dist_dir(results_dir, row))
@@ -205,28 +205,6 @@ def sources_analysis(df):
     r = [[source, len(df[df["source"] == source])] for source in sources]
     print(tabulate(r, tablefmt="pipe", headers = ["source", "number of datasets"]))
 
-
-def ambig_analysis(df):
-    types = ["ambig", "bin", "catg_bin", "catg_multi"]
-    r = []
-    for i, row in df.iterrows():
-        gqd_ambig = row["distance_matrix"].ref_tree_dist("glottolog", "ambig", "gq")
-        if gqd_ambig != gqd_ambig:
-            continue
-        else:
-            part_r = []
-            for type in types:
-                part_r.append(row["distance_matrix"].ref_tree_dist("glottolog", type, "gq"))
-            best = min(part_r)
-            winners = []
-            for i, type in enumerate(types):
-                if part_r[i] == best:
-                    winners.append(type)
-            part_r.append(winners)
-            r.append(part_r)
-    print("GQD to Glottolog")
-    print(tabulate(r, tablefmt="pipe", headers = types + ["winners"]))
-
 def sampling_analysis(df):
     data = []
     print("Average of $\\rho_{\\bin}$ over all datasets", str(df["gqd_bin"].mean()))
@@ -262,66 +240,31 @@ df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottol
 df = add_result_data(df)
 print(df)
 
-
-winner_dfs = get_winner_dfs(df)
-setup_comparison(df, winner_dfs)
-
-num_het(winner_dfs)
-another_analysis(winner_dfs)
-
-plot_distribution(df, "rf_bin_avg", r'$\bar{\delta}$')
-plot_distribution(df, "rf_bin_max", r'$\delta_{\max}$')
-
-columns_interesting = [
-        "alpha",
-        "sites_per_char",
-        "difficulty"
-]
-
-columns_uninteresting = [
-    "rf_bin_avg",
-    "num_taxa",
-    "num_chars",
-    "zero_base_frequency_bin"
-]
-
-winner_comparison(winner_dfs, columns_interesting)
-for column in columns_interesting:
-    boxplots(winner_dfs, column)
-
-columns_uninteresting = [
-        "num_chars",
-        "informative_char_ratio",
-        "difficulty_variance",
-]
-
-
-columns_interesting = [
-        "multistate_ratio",
-        "difficulty"
-        ]
-columns_bootstrap = [
-        "mean_norm_rf_distance",
-        "mean_parsimony_support",
-        "mean_parsimony_bootstrap_support",
-        "mean_bootstrap_support",
-        "zero_base_frequency_bin"
-        ]
-
-stability_correlation(df, columns_interesting)
-
-winner_comparison_plots(winner_dfs, "gqd_bin", "gqd_catg_multi")
-
+print("Datasets")
 sources_analysis(df)
 
+print("Effects of Synonym Selection")
 sampling_analysis(df)
+plot_distribution(df, "rf_bin_avg", r'$\bar{\delta}$')
+plot_distribution(df, "rf_bin_max", r'$\delta_{\max}$')
+stability_correlation(df, ["multistate_ratio", "difficulty"])
 
-ambig_analysis(df)
+print("Modelling Data with Synonyms")
+winner_dfs = get_winner_dfs(df)
+setup_comparison(df, winner_dfs)
+another_analysis(winner_dfs)
+winner_comparison(winner_dfs, ["alpha", "sites_per_char", "difficulty"])
+num_het(winner_dfs)
 
-iecor = df[df["ds_id"] == "iecor"]
 
-print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
-print("Mean difficulty: " + str(df["difficulty"].mean()))
 
-print("iecor rf_bin_avg: " + str(iecor["rf_bin_avg"].mean()))
-print("iecor difficulty: " + str(iecor["difficulty"].mean()))
+
+
+
+#iecor = df[df["ds_id"] == "iecor"]
+
+#print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
+#print("Mean difficulty: " + str(df["difficulty"].mean()))
+
+#print("iecor rf_bin_avg: " + str(iecor["rf_bin_avg"].mean()))
+#print("iecor difficulty: " + str(iecor["difficulty"].mean()))
