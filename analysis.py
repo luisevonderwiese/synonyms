@@ -227,8 +227,18 @@ def ambig_analysis(df):
     print("GQD to Glottolog")
     print(tabulate(r, tablefmt="pipe", headers = types + ["winners"]))
 
-
-
+def sampling_analysis(df):
+    data = []
+    print("Average of $\\rho_{\\bin}$ over all datasets", str(df["gqd_bin"].mean()))
+    print("Average of $\\rho_{\\samp}$ over all datasets", str(df["gqd_sampled_avg"].mean()))
+    for i, row in df.iterrows():
+        data.append(row["gqd_bin"] - row["gqd_sampled_avg"])
+    print("Maximum difference $\\rho_{\\bin} - \\rho_{\\samp}", str(max(data)))
+    plt.hist(data, bins = get_bins(data, 20))
+    plt.xlabel(r'$\rho_full - \rho_s$')
+    plt.ylabel('Number of datasets')
+    plt.savefig(os.path.join(plots_dir, "hist_difference.png"))
+    plt.clf()
 
 
 
@@ -259,8 +269,8 @@ setup_comparison(df, winner_dfs)
 num_het(winner_dfs)
 another_analysis(winner_dfs)
 
-plot_distribution(df, "rf_bin_avg", r'$\bar{d}$')
-plot_distribution(df, "rf_bin_max", r'$d_{\max}$')
+plot_distribution(df, "rf_bin_avg", r'$\bar{\delta}$')
+plot_distribution(df, "rf_bin_max", r'$\delta_{\max}$')
 
 columns_interesting = [
         "alpha",
@@ -304,15 +314,14 @@ winner_comparison_plots(winner_dfs, "gqd_bin", "gqd_catg_multi")
 
 sources_analysis(df)
 
+sampling_analysis(df)
+
 ambig_analysis(df)
 
 iecor = df[df["ds_id"] == "iecor"]
 
-# print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
-# print("Mean rf_sampled_avg: " + str(df["rf_sampled_avg"].mean()))
-# print("Mean difficulty: " + str(df["difficulty"].mean()))
-#
-# print("iecor rf_bin_avg: " + str(iecor["rf_bin_avg"].mean()))
-# print("iecor rf_sampled_avg: " + str(iecor["rf_sampled_avg"].mean()))
-# print("iecor difficulty: " + str(iecor["difficulty"].mean()))
-# print(" ")
+print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
+print("Mean difficulty: " + str(df["difficulty"].mean()))
+
+print("iecor rf_bin_avg: " + str(iecor["rf_bin_avg"].mean()))
+print("iecor difficulty: " + str(iecor["difficulty"].mean()))
