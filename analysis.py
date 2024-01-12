@@ -62,19 +62,18 @@ for (i, row) in df.iterrows():
     df.at[i, "rf_bin_catg_bin"] = row["distance_matrix"].ref_tree_dist("bin", "catg_bin", "rf")
     df.at[i, "rf_catg_bin_catg_multi"] = row["distance_matrix"].ref_tree_dist("catg_multi", "catg_bin", "rf")
     df.at[i, "rf_bin_catg_multi"] = row["distance_matrix"].ref_tree_dist("bin", "catg_multi", "rf")
+    df.at[i, "gqd_sampled_avg"] = row["distance_matrix"].avg_ref_tree_dist("glottolog", "gq")
     gqds = {}
     for type in ["bin", "catg_bin", "catg_multi"]:
         gqds[type] = row["distance_matrix"].ref_tree_dist("glottolog", type, "gq")
         df.at[i, "gqd_" + type] = gqds[type]
-    m = min(gqds, key=gqds.get)
-    winner = []
-    for type, gqd in gqds:
+    m = min(gqds.values())
+    for type, gqd in gqds.items():
         if gqd == m:
             df.at[i, type + "_best"] = True
         else:
             df.at[i, type + "_best"] = False
 
-df["gqd_sampled_diff"] = df["gqd_sampled_avg"] - df["gqd_bin"]
 df["gqd_diff_bin_catg_bin"] = df["gqd_bin"] - df["gqd_catg_bin"]
 df["gqd_diff_catg_bin_catg_multi"] = df["gqd_catg_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_catg_multi"] = df["gqd_bin"] - df["gqd_catg_multi"]
@@ -151,7 +150,8 @@ print(tabulate(rf_distances, tablefmt="pipe", floatfmt=".4f", headers = ["refere
 print("")
 
 print("Means in groups of datasets")
-r = [[setup] + [winner_dfs[setup][column].mean() for column in ["alpha", "sites_per_char", "difficulty"]] for setup in relevant_setups]
+columns = ["alpha", "sites_per_char", "difficulty"]
+r = [[setup] + [winner_dfs[setup][column].mean() for column in columns] for setup in relevant_setups]
 print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["setup"] + columns))
 print("")
 
