@@ -30,9 +30,6 @@ def plot_distribution(df, column, label):
 
 
 
-setups = ["bin", "catg_bin", "catg_multi", "bin&catg_bin", "bin&catg_multi", "catg_bin&catg_multi", "all"]
-relevant_setups = ["bin", "catg_bin", "catg_multi", "all"]
-
 results_dir = "data/results"
 plots_dir = os.path.join(results_dir, "plots")
 if not os.path.isdir(plots_dir):
@@ -47,7 +44,7 @@ df = database.data()
 
 print("Datasets with less than 2 different values")
 print(df[df["max_values"] < 2]["ds_id"])
-df = df[df["max_values"] >= 2] 
+df = df[df["max_values"] >= 2]
 print("Datasets with more than 64 different values")
 print(df[df["max_values"] > 64]["ds_id"])
 df = df[df["max_values"] <= 64]
@@ -85,7 +82,7 @@ df["gqd_diff_bin_catg_multi"] = df["gqd_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_sampled"] = df["gqd_bin"] - df["gqd_sampled_avg"]
 
 print("Datasets for which GQ distance to glottolog tree cannot be determined")
-print(df[df["gqd_bin"] != df["gqd_bin"]]["ds_id"]) 
+print(df[df["gqd_bin"] != df["gqd_bin"]]["ds_id"])
 df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottolog tree is small and so multifurcating, that it does noti contain butterflies
 
 results_df = pd.read_csv(os.path.join(results_dir, "raxml_pythia_results.csv"), sep = ";")
@@ -108,72 +105,67 @@ for column in ["multistate_ratio", "difficulty"]:
     mini_df = mini_df.dropna()
     pearson = stats.pearsonr(mini_df['rf_bin_avg'], mini_df[column])
     r.append([column, pearson[0], pearson[1]])
-print("Correlation with $\bar{\delta}")
+print("Correlation with $\bar{\delta}$")
 print(tabulate(r, tablefmt="pipe", floatfmt=".5f", headers = ["column", "pearson correlation", "p-value"]))
 print("")
 
 print("Modelling Data with Synonyms")
-winner_dfs = {}
-winner_dfs["bin"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & (df["catg_multi_best"] == False)]
-winner_dfs["catg_bin"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & (df["catg_multi_best"] == False)]
-winner_dfs["catg_multi"] =  df[(df["bin_best"] == False) & (df["catg_bin_best"] == False) & df["catg_multi_best"]]
-winner_dfs["bin&catg_bin"] =  df[df["bin_best"] & df["catg_bin_best"] & (df["catg_multi_best"] == False)]
-winner_dfs["bin&catg_multi"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & df["catg_multi_best"]]
-winner_dfs["catg_bin&catg_multi"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & df["catg_multi_best"]]
-winner_dfs["all"] =  df[df["bin_best"] & df["catg_bin_best"] & df["catg_multi_best"]]
+best_type_dfs = {}
+best_type_dfs["bin"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & (df["catg_multi_best"] == False)]
+best_type_dfs["catg_bin"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & (df["catg_multi_best"] == False)]
+best_type_dfs["catg_multi"] =  df[(df["bin_best"] == False) & (df["catg_bin_best"] == False) & df["catg_multi_best"]]
+best_type_dfs["bin&catg_bin"] =  df[df["bin_best"] & df["catg_bin_best"] & (df["catg_multi_best"] == False)]
+best_type_dfs["bin&catg_multi"] =  df[df["bin_best"] & (df["catg_bin_best"] == False) & df["catg_multi_best"]]
+best_type_dfs["catg_bin&catg_multi"] =  df[(df["bin_best"] == False) & df["catg_bin_best"] & df["catg_multi_best"]]
+best_type_dfs["all"] =  df[df["bin_best"] & df["catg_bin_best"] & df["catg_multi_best"]]
+
+
 
 
 print("Number of datasets for which the inference on the respective type leads to the tree closest to the gold standard:")
-r = [[setup, len(winner_dfs[setup])] for setup in setups]
-print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["setup", "best in x datasets"]))
+r = [[cm_type, len(best_type_dfs[cm_type])] for cm_type in ["bin", "catg_bin", "catg_multi", "bin&catg_bin", "bin&catg_multi", "catg_bin&catg_multi", "all"]]
+print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type(s)", "best in x datasets"]))
 print("")
 print("Mean GQ distances to gold standard")
-r = [[type, df['gqd_' + type].mean()] for type in ["bin", "catg_bin", "catg_multi", "sampled_avg"]]
+r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "catg_multi", "sampled_avg"]]
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["Inference on ", "mean GQ distance"]))
 print("")
-print("Mean GQ distances to gold standard - only among datasets for which the respective inference performs best")
-r = [[setup, winner_dfs[setup]["gqd_" + setup].mean()] for setup in setups[:3]]
-print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["setup", "best average gqd"]))
-print("")
 
+cm_types = ["bin", "catg_bin", "catg_multi"]
 gqd_diffs = []
 rf_distances = []
-for k, reference_setup in enumerate(relevant_setups[:-1]):
-    cur_gqd_diffs = [[] for _ in relevant_setups[:-1]]
-    cur_rf_distances = [[] for _ in relevant_setups[:-1]]
-    for i, row in winner_dfs[reference_setup].iterrows():
-        winner_gqd = row["distance_matrix"].ref_tree_dist(reference_setup, "glottolog", "gq")
-        for j, other_setup in enumerate(relevant_setups[:-1]):
-            other_gqd = row["distance_matrix"].ref_tree_dist(other_setup, "glottolog", "gq")
+for k, reference_cm_type in enumerate(cm_types):
+    cur_gqd_diffs = [[] for _ in cm_types]
+    cur_rf_distances = [[] for _ in cm_types]
+    for i, row in best_type_dfs[reference_cm_type].iterrows():
+        best_type_gqd = row["distance_matrix"].ref_tree_dist(reference_cm_type, "glottolog", "gq")
+        for j, other_cm_type in enumerate(cm_types):
+            other_gqd = row["distance_matrix"].ref_tree_dist(other_cm_type, "glottolog", "gq")
             if other_gqd != other_gqd:
                 print(row["ds_id"])
-            cur_gqd_diffs[j].append(other_gqd - winner_gqd)
-            cur_rf_distances[j].append(row["distance_matrix"].ref_tree_dist(reference_setup, other_setup, "rf"))
-    gqd_diffs.append([reference_setup] + [sum(cur_gqd_diffs[j]) / len(cur_gqd_diffs[j]) for j in range(len(relevant_setups) - 1)])
-    rf_distances.append([reference_setup] + [sum(cur_rf_distances[j]) / len(cur_rf_distances[j]) for j in range(len(relevant_setups) - 1)])
+            cur_gqd_diffs[j].append(other_gqd - best_type_gqd)
+            cur_rf_distances[j].append(row["distance_matrix"].ref_tree_dist(reference_cm_type, other_cm_type, "rf"))
+    gqd_diffs.append([reference_cm_type] + [sum(cur_gqd_diffs[j]) / len(cur_gqd_diffs[j]) for j in range(len(cm_types))])
+    rf_distances.append([reference_cm_type] + [sum(cur_rf_distances[j]) / len(cur_rf_distances[j]) for j in range(len(cm_types))])
 print("Each row corresponds to to group of datasets fo which the given MSA type leads to the best tree")
-print("In each column, there is the result of the comparison of this tree with the tree resulting from the respective other setup")
+print("In each column, there is the result of the comparison of this tree with the tree resulting from the respective other cm_type")
 print("Average differences of gq distance")
-print(tabulate(gqd_diffs, tablefmt="pipe", floatfmt=".4f", headers = ["reference_setup"] + relevant_setups[:-1]))
+print(tabulate(gqd_diffs, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("Average RF Distance of best scoring tree")
-print(tabulate(rf_distances, tablefmt="pipe", floatfmt=".4f", headers = ["reference_setup"] + relevant_setups[:-1]))
+print(tabulate(rf_distances, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("")
 
 print("Means in groups of datasets")
 columns = ["alpha", "sites_per_char", "difficulty"]
-r = [[setup] + [winner_dfs[setup][column].mean() for column in columns] for setup in relevant_setups]
-print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["setup"] + columns))
+r = [[cm_type] + [best_type_dfs[cm_type][column].mean() for column in columns] for cm_type in ["bin", "catg_bin", "catg_multi", "all"]]
+print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["cm_type"] + columns))
 print("")
 
 print("Number of datasets with high rate heterogenity")
 r = []
-for setup in relevant_setups:
-    setup_df = winner_dfs[setup]
-    num = len(setup_df[setup_df["heterogenity"] == True])
-    r.append([setup, num])
-print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["setup", "num"]))
+for cm_type in ["bin", "catg_bin", "catg_multi", "all"]:
+    type_df = best_type_dfs[cm_type]
+    num = len(type_df[type_df["heterogenity"] == True])
+    r.append([cm_type, num])
+print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type", "num"]))
 print("")
-
-
-
-
