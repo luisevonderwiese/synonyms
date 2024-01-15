@@ -45,7 +45,12 @@ config_path = "synonyms_lingdata_config.json"
 database.read_config(config_path)
 df = database.data()
 
-df = df[df["max_values"] >= 2] #filters out datasets with only one value/missing data (last time I checked it affected only one dataset)
+print("Datasets with less than 2 different values")
+print(df[df["max_values"] < 2]["ds_id"])
+df = df[df["max_values"] >= 2] 
+print("Datasets with more than 64 different values")
+print(df[df["max_values"] > 64]["ds_id"])
+df = df[df["max_values"] <= 64]
 
 distance_matrices = []
 d_io = DistanceMatrixIO(["rf", "gq"], ["glottolog", "bin", "catg_bin", "catg_multi", "consensus"])
@@ -79,7 +84,10 @@ df["gqd_diff_catg_bin_catg_multi"] = df["gqd_catg_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_catg_multi"] = df["gqd_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_sampled"] = df["gqd_bin"] - df["gqd_sampled_avg"]
 
+print("Datasets for which GQ distance to glottolog tree cannot be determined")
+print(df[df["gqd_bin"] != df["gqd_bin"]]["ds_id"]) 
 df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottolog tree is small and so multifurcating, that it does noti contain butterflies
+
 results_df = pd.read_csv(os.path.join(results_dir, "raxml_pythia_results.csv"), sep = ";")
 df = pd.merge(df, results_df, how = 'left', left_on=["ds_id", "source", "ling_type", "family"], right_on = ["ds_id", "source", "ling_type", "family"])
 print(df)
@@ -137,6 +145,8 @@ for k, reference_setup in enumerate(relevant_setups[:-1]):
         winner_gqd = row["distance_matrix"].ref_tree_dist(reference_setup, "glottolog", "gq")
         for j, other_setup in enumerate(relevant_setups[:-1]):
             other_gqd = row["distance_matrix"].ref_tree_dist(other_setup, "glottolog", "gq")
+            if other_gqd != other_gqd:
+                print(row["ds_id"])
             cur_gqd_diffs[j].append(other_gqd - winner_gqd)
             cur_rf_distances[j].append(row["distance_matrix"].ref_tree_dist(reference_setup, other_setup, "rf"))
     gqd_diffs.append([reference_setup] + [sum(cur_gqd_diffs[j]) / len(cur_gqd_diffs[j]) for j in range(len(relevant_setups) - 1)])
@@ -167,12 +177,3 @@ print("")
 
 
 
-
-
-#iecor = df[df["ds_id"] == "iecor"]
-
-#print("Mean rf_bin_avg: " + str(df["rf_bin_avg"].mean()))
-#print("Mean difficulty: " + str(df["difficulty"].mean()))
-
-#print("iecor rf_bin_avg: " + str(iecor["rf_bin_avg"].mean()))
-#print("iecor difficulty: " + str(iecor["difficulty"].mean()))
