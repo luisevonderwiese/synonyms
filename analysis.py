@@ -105,8 +105,8 @@ for column in ["multistate_ratio", "difficulty"]:
     mini_df = mini_df.dropna()
     pearson = stats.pearsonr(mini_df['rf_bin_avg'], mini_df[column])
     r.append([column, pearson[0], pearson[1]])
-print("Correlation with $\bar{\delta}$")
-print(tabulate(r, tablefmt="pipe", floatfmt=".5f", headers = ["column", "pearson correlation", "p-value"]))
+print("Correlation with rf_bin_avg")
+print(tabulate(r, tablefmt="pipe", floatfmt=".5f", headers = ["metric", "pearson correlation", "p-value"]))
 print("")
 
 print("Modelling Data with Synonyms")
@@ -121,14 +121,15 @@ best_type_dfs["all"] =  df[df["bin_best"] & df["catg_bin_best"] & df["catg_multi
 
 
 
+print("Mean GQ distances to gold standard")
+r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "catg_multi", "sampled_avg"]]
+print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["Inference on ", "mean GQ distance"]))
+print("")
 
 print("Number of datasets for which the inference on the respective type leads to the tree closest to the gold standard:")
 r = [[cm_type, len(best_type_dfs[cm_type])] for cm_type in ["bin", "catg_bin", "catg_multi", "bin&catg_bin", "bin&catg_multi", "catg_bin&catg_multi", "all"]]
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type(s)", "best in x datasets"]))
-print("")
-print("Mean GQ distances to gold standard")
-r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "catg_multi", "sampled_avg"]]
-print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["Inference on ", "mean GQ distance"]))
+print("(In the following, we group the datasets according to which cm_type leads to the tree closest to the gold standard)")
 print("")
 
 cm_types = ["bin", "catg_bin", "catg_multi"]
@@ -147,25 +148,25 @@ for k, reference_cm_type in enumerate(cm_types):
             cur_rf_distances[j].append(row["distance_matrix"].ref_tree_dist(reference_cm_type, other_cm_type, "rf"))
     gqd_diffs.append([reference_cm_type] + [sum(cur_gqd_diffs[j]) / len(cur_gqd_diffs[j]) for j in range(len(cm_types))])
     rf_distances.append([reference_cm_type] + [sum(cur_rf_distances[j]) / len(cur_rf_distances[j]) for j in range(len(cm_types))])
-print("Each row corresponds to to group of datasets fo which the given MSA type leads to the best tree")
-print("In each column, there is the result of the comparison of this tree with the tree resulting from the respective other cm_type")
-print("Average differences of gq distance")
+print("Each row refers to the group of datasets corresponding to the given cm_type")
+print("Each entry provides the result of the comparison of the tree resulting from the inference on the best-performing cm_type with the tree resulting from the inference on cm_type the respecitve column corresponds to")
+print("Average differences of GQ distance to gold standard")
 print(tabulate(gqd_diffs, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("Average RF Distance of best scoring tree")
 print(tabulate(rf_distances, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("")
 
-print("Means in groups of datasets")
+print("Means of metrics within dataset groups")
 columns = ["alpha", "sites_per_char", "difficulty"]
 r = [[cm_type] + [best_type_dfs[cm_type][column].mean() for column in columns] for cm_type in ["bin", "catg_bin", "catg_multi", "all"]]
-print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["cm_type"] + columns))
+print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["cm_type group"] + columns))
 print("")
 
-print("Number of datasets with high rate heterogenity")
+print("Number of datasets with high rate heterogenity within dataset groups")
 r = []
 for cm_type in ["bin", "catg_bin", "catg_multi", "all"]:
     type_df = best_type_dfs[cm_type]
     num = len(type_df[type_df["heterogenity"] == True])
     r.append([cm_type, num])
-print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type", "num"]))
+print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type group", "num"]))
 print("")
