@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from tabulate import tabulate
 import math
 from scipy import stats
@@ -22,7 +23,8 @@ def get_bins(a, nbins):
 def plot_distribution(df, column, label):
     data = df[column]
     print("Maximum", column, str(max(data)))
-    plt.hist(data, bins = get_bins(data, 20))
+    y, _, _ = plt.hist(data, bins = get_bins(data, 20))
+    plt.yticks(range(0, math.ceil(y.max())+1, 2))
     plt.xlabel(label)
     plt.ylabel('Number of datasets')
     plt.savefig(os.path.join(plots_dir, "hist_" + column +  ".png"))
@@ -98,7 +100,7 @@ print("")
 print("Effects of Synonym Selection")
 plot_distribution(df, "rf_bin_avg", r'$\bar{\delta}$')
 plot_distribution(df, "rf_bin_max", r'$\delta_{\max}$')
-plot_distribution(df, "gqd_diff_bin_sampled", r'$\rho_full - \rho_s$')
+plot_distribution(df, "gqd_diff_bin_sampled", r'$\rho_{full} - \rho_s$')
 r = []
 for column in ["multistate_ratio", "difficulty"]:
     mini_df = df[["rf_bin_avg", column]]
