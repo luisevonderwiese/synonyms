@@ -91,8 +91,8 @@ results_dir = "data/results"
 
 
 database.read_config(config_path)
-#database.update_native()
-#database.generate_data()
+#database.download()
+#database.compile()
 df = database.data()
 pd.set_option('display.max_rows', None)
 print(df)
@@ -101,4 +101,4 @@ print(df)
 #consense_trees(df)
 #calculate_distances(df)
 #run_pythia(df)
-#write_results_df(df)
+write_results_df(df)

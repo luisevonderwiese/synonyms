@@ -9,4 +9,5 @@
 "msa_types" : ["bin", "catg_bin", "catg_multi"],
 "partition_types" : [],
 "glottolog_tree_required" : 1,
-"flat_paths" : 1}
+"flat_paths" : 1,
+"download_cutoff": "2023-12-05T00:00:00+00:00"}
