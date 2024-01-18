@@ -40,7 +40,7 @@ def calculate_distances(df):
         ref_tree_paths[partition_name] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", partition_name))
         partition_name = util.partition_name("bin", "BIN", True, "x")
         ref_tree_paths[partition_name] = raxmlng.best_tree_path(util.prefix(results_dir, row, "raxmlng", partition_name))
-        d_io.write_matrix(dist_dir, sampled_tree_paths, ref_tree_paths)
+        d_io.write_matrix(dist_dir, [], ref_tree_paths)
 
 
 def write_results_df(df):
@@ -71,11 +71,11 @@ results_dir = "data/results"
 
 
 database.read_config(config_path)
-database.compile()
+#database.compile()
 df = database.data()
 pd.set_option('display.max_rows', None)
 print(df)
 
-run_raxml_ng(df)
+#run_raxml_ng(df)
 calculate_distances(df)
 write_results_df(df)
