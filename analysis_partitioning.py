@@ -68,13 +68,13 @@ print("")
 
 print("Modelling Data with Synonyms")
 best_type_dfs = {}
-best_type_dfs["bin"] =  df[df["bin_best"] & (df["bin_BIN+G_2_best"] == False) & (df["bin_BIN+G_x"] == False)]
-best_type_dfs["bin_BIN+G_2"] =  df[(df["bin_best"] == False) & df["bin_BIN+G_2_best"] & (df["bin_BIN+G_x"] == False)]
-best_type_dfs["bin_BIN+G_x"] =  df[(df["bin_best"] == False) & (df["bin_BIN+G_2_best"] == False) & df["bin_BIN+G_x"]]
-best_type_dfs["bin&bin_BIN+G_2"] =  df[df["bin_best"] & df["bin_BIN+G_2_best"] & (df["bin_BIN+G_x"] == False)]
-best_type_dfs["bin&bin_BIN+G_x"] =  df[df["bin_best"] & (df["bin_BIN+G_2_best"] == False) & df["bin_BIN+G_x"]]
-best_type_dfs["bin_BIN+G_2&bin_BIN+G_x"] =  df[(df["bin_best"] == False) & df["bin_BIN+G_2_best"] & df["bin_BIN+G_x"]]
-best_type_dfs["all"] =  df[df["bin_best"] & df["bin_BIN+G_2_best"] & df["bin_BIN+G_x"]]
+best_type_dfs["bin"] =  df[df["bin_best"] & (df["bin_BIN+G_2_best"] == False) & (df["bin_BIN+G_x_best"] == False)]
+best_type_dfs["bin_BIN+G_2"] =  df[(df["bin_best"] == False) & df["bin_BIN+G_2_best"] & (df["bin_BIN+G_x_best"] == False)]
+best_type_dfs["bin_BIN+G_x"] =  df[(df["bin_best"] == False) & (df["bin_BIN+G_2_best"] == False) & df["bin_BIN+G_x_best"]]
+best_type_dfs["bin&bin_BIN+G_2"] =  df[df["bin_best"] & df["bin_BIN+G_2_best"] & (df["bin_BIN+G_x_best"] == False)]
+best_type_dfs["bin&bin_BIN+G_x"] =  df[df["bin_best"] & (df["bin_BIN+G_2_best"] == False) & df["bin_BIN+G_x_best"]]
+best_type_dfs["bin_BIN+G_2&bin_BIN+G_x"] =  df[(df["bin_best"] == False) & df["bin_BIN+G_2_best"] & df["bin_BIN+G_x_best"]]
+best_type_dfs["all"] =  df[df["bin_best"] & df["bin_BIN+G_2_best"] & df["bin_BIN+G_x_best"]]
 
 
 
