@@ -53,7 +53,6 @@ for (i, row) in df.iterrows():
             df.at[i, type + "_best"] = True
         else:
             df.at[i, type + "_best"] = False
-print(df[gqd_names])
 
 print("Datasets for which GQ distance to glottolog tree cannot be determined")
 print(df[df["gqd_bin"] != df["gqd_bin"]]["ds_id"])
@@ -61,7 +60,9 @@ df = df[df["gqd_bin"] == df["gqd_bin"]] #sometimes gq distance is nan if glottol
 
 results_df = pd.read_csv(os.path.join(results_dir, "raxml_pythia_results_partitioning.csv"), sep = ";")
 df = pd.merge(df, results_df, how = 'left', left_on=["ds_id", "source", "ling_type", "family"], right_on = ["ds_id", "source", "ling_type", "family"])
-print(df)
+#print(df)
+print(df[gqd_names])
+
 
 print("Datasets")
 sources = set(df['source'].tolist())
