@@ -155,7 +155,7 @@ best_type_dfs["all"] =  df[df["bin_best"] & df["catg_bin_best"] & df["catg_multi
 
 
 print("Mean GQ distances to gold standard")
-r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "catg_multi", "sampled_avg"]]
+r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "catg_multi", "sampled_median"]]
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["Inference on ", "mean GQ distance"]))
 print("")
 
