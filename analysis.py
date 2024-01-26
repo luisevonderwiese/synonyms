@@ -5,6 +5,7 @@ from matplotlib.ticker import MaxNLocator
 from tabulate import tabulate
 import math
 from scipy import stats
+import numpy as np
 
 from lingdata import database
 from lingdata.categorical import CategoricalData
@@ -22,7 +23,6 @@ def get_bins(a, nbins):
 
 def plot_distribution(df, column, label):
     data = df[column]
-    print("Maximum", column, str(max(data)))
     y, _, _ = plt.hist(data, bins = get_bins(data, 20))
     plt.yticks(range(0, math.ceil(y.max())+1, 2))
     plt.xlabel(label)
@@ -67,6 +67,8 @@ for (i, row) in df.iterrows():
     df.at[i, "rf_catg_bin_catg_multi"] = row["distance_matrix"].ref_tree_dist("catg_multi", "catg_bin", "rf")
     df.at[i, "rf_bin_catg_multi"] = row["distance_matrix"].ref_tree_dist("bin", "catg_multi", "rf")
     df.at[i, "gqd_sampled_avg"] = row["distance_matrix"].avg_ref_tree_dist("glottolog", "gq")
+    df.at[i, "gqd_sampled_std"] = np.std(row["distance_matrix"].ref_tree_dist_vector("glottolog", "gq"))
+    df.at[i, "gqd_sampled_median"] = np.median(row["distance_matrix"].ref_tree_dist_vector("glottolog", "gq"))
     gqds = {}
     for type in ["bin", "catg_bin", "catg_multi"]:
         gqds[type] = row["distance_matrix"].ref_tree_dist("glottolog", type, "gq")
@@ -82,6 +84,9 @@ df["gqd_diff_bin_catg_bin"] = df["gqd_bin"] - df["gqd_catg_bin"]
 df["gqd_diff_catg_bin_catg_multi"] = df["gqd_catg_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_catg_multi"] = df["gqd_bin"] - df["gqd_catg_multi"]
 df["gqd_diff_bin_sampled"] = df["gqd_bin"] - df["gqd_sampled_avg"]
+df["gqd_diff_bin_sampled_median"] = df["gqd_bin"] - df["gqd_sampled_median"]
+
+
 
 print("Datasets for which GQ distance to glottolog tree cannot be determined")
 print(df[df["gqd_bin"] != df["gqd_bin"]]["ds_id"])
@@ -100,7 +105,33 @@ print("")
 print("Effects of Synonym Selection")
 plot_distribution(df, "rf_bin_avg", r'$\bar{\delta}$')
 plot_distribution(df, "rf_bin_max", r'$\delta_{\max}$')
-plot_distribution(df, "gqd_diff_bin_sampled", r'$\rho_{full} - \rho_s$')
+#plot_distribution(df, "gqd_diff_bin_sampled", r'$\rho_{full} -\bar{\rho}$')
+#plot_distribution(df, "gqd_diff_bin_sampled_median", r'$\rho_{full} - \tilde{\rho}$')
+plot_distribution(df, "gqd_sampled_std", r'$\sigma_{\rho}$')
+
+plt.axline([0, 0], slope=1, color = 'lightgray', linewidth = 1, linestyle = "--")
+plt.scatter(df["gqd_bin"], df["gqd_sampled_avg"], s=10)
+plt.xlabel(r'$\rho_{full}$')
+plt.ylabel(r'$\bar{\rho}$')
+plt.savefig(os.path.join(plots_dir, "scatter_mean.png"))
+plt.clf()
+
+plt.axline([0, 0], slope=1, color = 'lightgray', linewidth = 1, linestyle = "--")
+plt.scatter(df["gqd_bin"], df["gqd_sampled_median"], s=10)
+plt.xlabel(r'$\rho_{full}$')
+plt.ylabel(r'$\tilde{\rho}$')
+plt.savefig(os.path.join(plots_dir, "scatter_median.png"))
+plt.clf()
+
+print(r"Number of datasets with $\rho_{full}\leq \tilde{\rho}$")
+print(len(df[df["gqd_diff_bin_sampled_median"] <= 0]))
+print(r"Number of datasets with $\rho_{full}> \tilde{\rho}$ by more than 0.01")
+print(len(df[df["gqd_diff_bin_sampled_median"] > 0.01]))
+print(r"Maximum of $\rho_{full} -  \tilde{\rho}$")
+print(round(max(df["gqd_diff_bin_sampled_median"]), 2))
+print("")
+
+
 r = []
 for column in ["multistate_ratio", "difficulty"]:
     mini_df = df[["rf_bin_avg", column]]
@@ -128,6 +159,7 @@ r = [[cm_type, df['gqd_' + cm_type].mean()] for cm_type in ["bin", "catg_bin", "
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["Inference on ", "mean GQ distance"]))
 print("")
 
+
 print("Number of datasets for which the inference on the respective type leads to the tree closest to the gold standard:")
 r = [[cm_type, len(best_type_dfs[cm_type])] for cm_type in ["bin", "catg_bin", "catg_multi", "bin&catg_bin", "bin&catg_multi", "catg_bin&catg_multi", "all"]]
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type(s)", "best in x datasets"]))
@@ -152,14 +184,15 @@ for k, reference_cm_type in enumerate(cm_types):
     rf_distances.append([reference_cm_type] + [sum(cur_rf_distances[j]) / len(cur_rf_distances[j]) for j in range(len(cm_types))])
 print("Each row refers to the group of datasets corresponding to the given cm_type")
 print("Each entry provides the result of the comparison of the tree resulting from the inference on the best-performing cm_type with the tree resulting from the inference on cm_type the respecitve column corresponds to")
-print("Average differences of GQ distance to gold standard")
-print(tabulate(gqd_diffs, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
+#print("Average differences of GQ distance to gold standard")
+#print(tabulate(gqd_diffs, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("Average RF Distance of best scoring tree")
 print(tabulate(rf_distances, tablefmt="pipe", floatfmt=".4f", headers = ["reference_cm_type"] + cm_types))
 print("")
 
 print("Means of metrics within dataset groups")
-columns = ["alpha", "sites_per_char", "difficulty"]
+#columns = ["alpha", "sites_per_char", "difficulty"]
+columns = ["alpha",  "difficulty"]
 r = [[cm_type] + [best_type_dfs[cm_type][column].mean() for column in columns] for cm_type in ["bin", "catg_bin", "catg_multi", "all"]]
 print(tabulate(r, tablefmt="pipe", floatfmt=".4f", headers = ["cm_type group"] + columns))
 print("")
@@ -172,3 +205,5 @@ for cm_type in ["bin", "catg_bin", "catg_multi", "all"]:
     r.append([cm_type, num])
 print(tabulate(r, tablefmt="pipe", floatfmt=".2f", headers = ["cm_type group", "num"]))
 print("")
+
+
