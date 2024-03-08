@@ -43,7 +43,7 @@ df["distance_matrix"] = distance_matrices
 for (i, row) in df.iterrows():
     gqds = {}
     gqd_names = ["ds_id", "ling_type", "alpha", "sites_per_char", "difficulty"]
-    for type in ["bin", "bin_BIN+G_2", "bin_BIN+G_x", "catg_bin", "catg_multi"]:
+    for type in ["bin", "bin_BIN+G_2", "bin_BIN+G_x"]:
         gqds[type] = row["distance_matrix"].ref_tree_dist("glottolog", type, "gq")
         df.at[i, "gqd_" + type] = gqds[type]
         gqd_names.append("gqd_" + type)
